@@ -22,11 +22,6 @@ public class SlidingMenuLayout extends RelativeLayout {
   View mContent;
   View mMenu;
   MenuLayout mMenuContainer;
-  int mTouchSlop;
-  float mLastMotionX;
-  float mLastMotionY;
-  boolean mIsBeingDragged;
-  int mActivePointerId = INVALID_POINTER;
 
   public SlidingMenuLayout(Context context) {
     super(context);
@@ -57,8 +52,6 @@ public class SlidingMenuLayout extends RelativeLayout {
     mMenuContainer.addView(mMenu, params);
     addView(mMenuContainer, params);
     decor.addView(this);
-    //a touch event on the edge should be considered to open the menu
-    mTouchSlop = ViewConfiguration.get(activity).getScaledTouchSlop() * 2;
   }
 
   public void setOpenPercent(float percent) {
@@ -83,62 +76,6 @@ public class SlidingMenuLayout extends RelativeLayout {
     return true;
   }
 
-  @Override
-  public boolean onInterceptTouchEvent(MotionEvent ev) {
-    final int action = ev.getAction() & MotionEventCompat.ACTION_MASK;
-    if (action == MotionEvent.ACTION_DOWN) {
-      float x = ev.getX();
-      if (mMenuContainer.isShowing() && !mMenuContainer.hit(x)) {
-        return true;
-      } else if (!mMenuContainer.isShowing() && x <= mTouchSlop) {
-        setOpenPercent(0.1f);
-        return true;
-      }
-    }
-    return false;
-  }
-
-  @Override
-  public boolean onTouchEvent(MotionEvent event) {
-    final int action = event.getAction() & MotionEventCompat.ACTION_MASK;
-    if (action == MotionEvent.ACTION_DOWN) {
-      mLastMotionX = MotionEventCompat.getX(event, 0);
-      mLastMotionY = MotionEventCompat.getY(event, 0);
-      if (!mMenuContainer.isShowing()) {
-        if (mLastMotionX > mTouchSlop) {
-          return false;
-        }
-      }
-      return true;
-    } else if (action == MotionEvent.ACTION_MOVE) {
-      if (!mIsBeingDragged) {
-        determineDrag(event);
-      }
-      return true;
-    } else if (action == MotionEvent.ACTION_UP) {
-      if (mMenuContainer.isShowing() && mMenuContainer.mOpenPercent <= 0.5f) {
-        mMenuContainer.close();
-      }
-    }
-    return false;
-  }
-
-  void determineDrag(MotionEvent event) {
-    final float x = MotionEventCompat.getX(event, 0);
-    final float dx = x - mLastMotionX;
-    final float xDiff = Math.abs(dx);
-    final float y = MotionEventCompat.getY(event, 0);
-    final float dy = y - mLastMotionY;
-    final float yDiff = Math.abs(dy);
-    if (xDiff > mTouchSlop && xDiff > yDiff) {
-      mIsBeingDragged = true;
-      SlidingMenuLayout.this.setOnDragListener(mMenuContainer);
-      SlidingMenuLayout.this.startDrag(null, new DragShadowBuilder(), null, 0);
-      mLastMotionX = x;
-      mLastMotionY = y;
-    }
-  }
-
   class MenuLayout extends RelativeLayout implements OnDragListener {
     int mWidthOffset;
     int mWidth;
@@ -147,24 +84,74 @@ public class SlidingMenuLayout extends RelativeLayout {
     float mOpenPercent = 0f;
     View mMenu;
     MenuListener mListener;
+    int mTouchSlop;
+    float mLastMotionX;
+    float mLastMotionY;
+    boolean mIsBeingDragged;
 
     public MenuLayout(Context context, View menu, int widthOffset) {
       super(context);
       mMenu = menu;
       mWidthOffset = widthOffset;
-//      mMenu.setOnTouchListener(new OnTouchListener() {
-//        @Override
-//        public boolean onTouch(View v, MotionEvent event) {
-//          final int action = event.getAction() & MotionEventCompat.ACTION_MASK;
-//          if(action == MotionEvent.ACTION_DOWN) {
-//            //thus, the touch point can move around the full screen
-//            SlidingMenuLayout.this.setOnDragListener(MenuLayout.this);
-//            SlidingMenuLayout.this.startDrag(null, new DragShadowBuilder(), null, 0);
-//            return true;
-//          }
-//          return false;
-//        }
-//      });
+      //a touch event on the edge should be considered to open the menu
+      mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop() * 2;
+    }
+
+
+    @Override
+    public boolean onInterceptTouchEvent(MotionEvent ev) {
+      final int action = ev.getAction() & MotionEventCompat.ACTION_MASK;
+      if (action == MotionEvent.ACTION_DOWN) {
+        float x = ev.getX();
+        if (mMenuContainer.isShowing() && !mMenuContainer.hit(x)) {
+          return true;
+        } else if (!mMenuContainer.isShowing() && x <= mTouchSlop) {
+          setOpenPercent(0.1f);
+          return true;
+        }
+      }
+      return false;
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+      final int action = event.getAction() & MotionEventCompat.ACTION_MASK;
+      if (action == MotionEvent.ACTION_DOWN) {
+        mLastMotionX = MotionEventCompat.getX(event, 0);
+        mLastMotionY = MotionEventCompat.getY(event, 0);
+        if (!mMenuContainer.isShowing()) {
+          if (mLastMotionX > mTouchSlop) {
+            return false;
+          }
+        }
+        return true;
+      } else if (action == MotionEvent.ACTION_MOVE) {
+        if (!mIsBeingDragged) {
+          determineDrag(event);
+        }
+        return true;
+      } else if (action == MotionEvent.ACTION_UP) {
+        if (mMenuContainer.isShowing() && mMenuContainer.mOpenPercent <= 0.5f) {
+          mMenuContainer.close();
+        }
+      }
+      return false;
+    }
+
+    void determineDrag(MotionEvent event) {
+      final float x = MotionEventCompat.getX(event, 0);
+      final float dx = x - mLastMotionX;
+      final float xDiff = Math.abs(dx);
+      final float y = MotionEventCompat.getY(event, 0);
+      final float dy = y - mLastMotionY;
+      final float yDiff = Math.abs(dy);
+      if (xDiff > mTouchSlop && xDiff > yDiff) {
+        mIsBeingDragged = true;
+        this.setOnDragListener(mMenuContainer);
+        this.startDrag(null, new DragShadowBuilder(), null, 0);
+        mLastMotionX = x;
+        mLastMotionY = y;
+      }
     }
 
     @Override
