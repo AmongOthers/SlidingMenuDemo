@@ -2,35 +2,53 @@ package slidingmenudemo.amongothers.org.slidingmenudemo;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.os.Handler;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
 
+import org.amongothers.slidingmenu.SlidingMenuLayout;
 
 public class SlidingMenuDemo extends Activity {
+  TextView mPercentTv;
+  Handler mHandler;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_sliding_menu_demo);
-    }
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.content_frame);
 
+    Button btn = (Button) findViewById(R.id.btn);
+    btn.setOnClickListener(new Button.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        Toast.makeText(SlidingMenuDemo.this, "按钮被点击", Toast.LENGTH_SHORT).show();
+      }
+    });
+    mPercentTv = (TextView) findViewById(R.id.percent);
+    mHandler = new Handler();
+    final SlidingMenuLayout slidingMenuLayout = new SlidingMenuLayout(this);
+    View menu = this.getLayoutInflater().inflate(R.layout.menu, null);
+    Button menubtn = (Button) menu.findViewById(R.id.menubtn);
+    menubtn.setOnClickListener(new Button.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        Toast.makeText(SlidingMenuDemo.this, "菜单按钮被点击", Toast.LENGTH_SHORT).show();
+      }
+    });
+    slidingMenuLayout.init(this, menu, 100);
+    slidingMenuLayout.setMenuListener(new SlidingMenuLayout.MenuListener() {
+      @Override
+      public void onPercentChanged(final float percent) {
+        mHandler.post(new Runnable() {
+          @Override
+          public void run() {
+            mPercentTv.setText(String.format("percent: %f", percent));
+          }
+        });
+      }
+    });
+  }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.sliding_menu_demo, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
 }
