@@ -1,5 +1,6 @@
 package org.amongothers.slidingmenu;
 
+import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -15,6 +16,7 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
+import android.widget.ViewAnimator;
 
 /**
  * Created by Administrator on 2014/8/3.
@@ -227,9 +229,9 @@ public class SlidingMenuLayout extends RelativeLayout {
         case DragEvent.ACTION_DRAG_ENDED:
           mIsBeingDragged = false;
           if (mOpenPercent >= 0.5f) {
-            setOpenPercent(1f);
+            animOpen();
           } else {
-            setOpenPercent(0f);
+            animClose();
           }
           return true;
         default:
@@ -238,11 +240,15 @@ public class SlidingMenuLayout extends RelativeLayout {
     }
 
     void animOpen() {
-
+      ObjectAnimator anim = ObjectAnimator.ofFloat(this, "openPercent", mOpenPercent, 1f);
+      anim.setDuration(200);
+      anim.start();
     }
 
     void animClose() {
-
+      ObjectAnimator anim = ObjectAnimator.ofFloat(this, "openPercent", mOpenPercent, 0f);
+      anim.setDuration(200);
+      anim.start();
     }
   }
 }
