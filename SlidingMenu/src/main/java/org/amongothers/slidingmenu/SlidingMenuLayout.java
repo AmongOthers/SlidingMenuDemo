@@ -3,6 +3,9 @@ package org.amongothers.slidingmenu;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.Rect;
 import android.support.v4.view.MotionEventCompat;
 import android.util.AttributeSet;
@@ -35,7 +38,7 @@ public class SlidingMenuLayout extends RelativeLayout {
     super(context, attrs, defStyle);
   }
 
-  public void init(Activity activity, View menu, int widthOffset) {
+  public void init(Activity activity, View menu) {
     TypedArray a = activity.getTheme().obtainStyledAttributes(new int[]{android.R.attr.windowBackground});
     int background = a.getResourceId(0, 0);
     a.recycle();
@@ -48,7 +51,7 @@ public class SlidingMenuLayout extends RelativeLayout {
     mMenu = menu;
     RelativeLayout.LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
     addView(mContent, params);
-    mMenuContainer = new MenuLayout(activity, mMenu, widthOffset);
+    mMenuContainer = new MenuLayout(activity, mMenu);
     mMenuContainer.addView(mMenu, params);
     addView(mMenuContainer, params);
     decor.addView(this);
@@ -79,6 +82,7 @@ public class SlidingMenuLayout extends RelativeLayout {
   class MenuLayout extends RelativeLayout implements OnDragListener {
     int mWidthOffset;
     int mWidth;
+    int mHeight;
     int mMenuWidth;
     int mRight;
     float mOpenPercent = 0f;
@@ -88,11 +92,12 @@ public class SlidingMenuLayout extends RelativeLayout {
     float mLastMotionX;
     float mLastMotionY;
     boolean mIsBeingDragged;
+    Paint mFadePaint = new Paint();
 
-    public MenuLayout(Context context, View menu, int widthOffset) {
+    public MenuLayout(Context context, View menu) {
       super(context);
       mMenu = menu;
-      mWidthOffset = widthOffset;
+      mWidthOffset = (int) getResources().getDimension(R.dimen.menu_offset);
       //a touch event on the edge should be considered to open the menu
       mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop() * 2;
     }
@@ -158,6 +163,7 @@ public class SlidingMenuLayout extends RelativeLayout {
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
       if (mWidth == 0) {
         mWidth = r - 1;
+        mHeight = b - t;
         mMenuWidth = mWidth - mWidthOffset;
       }
       int left = (int) (0 - (mMenuWidth) * (1 - mOpenPercent));
@@ -165,9 +171,18 @@ public class SlidingMenuLayout extends RelativeLayout {
       mMenu.layout(left, 0, mRight, b - t);
     }
 
+    @Override
+    protected void dispatchDraw(Canvas canvas) {
+      super.dispatchDraw(canvas);
+      int alpha = (int) (0.5 * 255 * Math.abs(mOpenPercent));
+      mFadePaint.setColor(Color.argb(alpha, 0, 0, 0));
+      canvas.drawRect(mRight + 1, 0, mWidth + 1, mHeight, mFadePaint);
+    }
+
     public void setOpenPercent(float percent) {
       mOpenPercent = percent;
       requestLayout();
+      invalidate();
     }
 
     public void setMenuListener(MenuListener listener) {

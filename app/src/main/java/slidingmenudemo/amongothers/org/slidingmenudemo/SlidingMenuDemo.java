@@ -37,7 +37,7 @@ public class SlidingMenuDemo extends Activity {
         Toast.makeText(SlidingMenuDemo.this, "菜单按钮被点击", Toast.LENGTH_SHORT).show();
       }
     });
-    slidingMenuLayout.init(this, menu, 100);
+    slidingMenuLayout.init(this, menu);
     slidingMenuLayout.setMenuListener(new SlidingMenuLayout.MenuListener() {
       @Override
       public void onPercentChanged(final float percent) {
