@@ -16,13 +16,11 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
-import android.widget.ViewAnimator;
 
 /**
  * Created by Administrator on 2014/8/3.
  */
 public class SlidingMenuLayout extends RelativeLayout {
-  static final int INVALID_POINTER = -1;
 
   View mContent;
   View mMenu;
@@ -148,6 +146,9 @@ public class SlidingMenuLayout extends RelativeLayout {
     void determineDrag(MotionEvent event) {
       final float x = MotionEventCompat.getX(event, 0);
       final float dx = x - mLastMotionX;
+      if(mOpenPercent == 1f && dx > 0) {
+        return;
+      }
       final float xDiff = Math.abs(dx);
       final float y = MotionEventCompat.getY(event, 0);
       final float dy = y - mLastMotionY;
