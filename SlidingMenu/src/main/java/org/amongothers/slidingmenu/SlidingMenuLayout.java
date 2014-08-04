@@ -85,12 +85,13 @@ public class SlidingMenuLayout extends RelativeLayout {
     int mHeight;
     int mMenuWidth;
     int mRight;
-    float mOpenPercent = 0f;
+    int mTouchSlop;
     View mMenu;
     MenuListener mListener;
-    int mTouchSlop;
+    float mOpenPercent = 0f;
     float mLastMotionX;
     float mLastMotionY;
+    float mLastDragX;
     boolean mIsBeingDragged;
     Paint mFadePaint = new Paint();
 
@@ -157,8 +158,9 @@ public class SlidingMenuLayout extends RelativeLayout {
         mIsBeingDragged = true;
         this.setOnDragListener(mMenuContainer);
         this.startDrag(null, new DragShadowBuilder(), null, 0);
-        mLastMotionX = x;
-        mLastMotionY = y;
+        mLastDragX = x;
+//        mLastMotionX = x;
+//        mLastMotionY = y;
       }
     }
 
@@ -217,10 +219,11 @@ public class SlidingMenuLayout extends RelativeLayout {
         case DragEvent.ACTION_DRAG_LOCATION:
           float percent = 0f;
           float x = event.getX();
-          if (x >= mMenuWidth) {
+          float xDiff = x - mLastDragX;
+          mLastDragX = x;
+          percent = mOpenPercent + xDiff / mMenuWidth;
+          if(percent > 1f) {
             percent = 1f;
-          } else {
-            percent = x / mMenuWidth;
           }
           setOpenPercent(percent);
           if (mListener != null) {
